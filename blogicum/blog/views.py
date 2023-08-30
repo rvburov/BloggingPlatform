@@ -83,19 +83,12 @@ class PostDetailView(DetailView):
         context['comments'] = comments
         return context
 
-    def get_queryset(self):
-        queryset = (
-            Post.objects.select_related(
-                'location',
-                'author',
-                'category',
-            ).filter(
-                pub_date__lte=timezone.now(),
-                is_published=True,
-                category__is_published=True,
-            ).annotate(comment_count=Count("comment")).order_by('-pub_date')
-        )
-        return queryset
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            self.model.objects.select_related('location', 'author', 'category')
+            .filter(pub_date__lte=timezone.now(),
+                    is_published=True,
+                    category__is_published=True), pk=self.kwargs['post_id'])
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
