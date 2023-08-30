@@ -96,9 +96,10 @@ class PostDetailView(DetailView):
 
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
-
         if not self.object.is_published and self.object.author != request.user:
-            raise PermissionDenied("You do not have permission to access this post.")
+            raise PermissionDenied(
+                "У вас нет разрешения на доступ к этому сообщению."
+                )
 
         return super().dispatch(request, *args, **kwargs)
 
