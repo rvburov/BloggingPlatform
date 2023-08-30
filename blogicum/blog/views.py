@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
 from django.db.models import Count
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 
 # Импорты моделей и форм
 from .models import Post, Category, Comment
@@ -72,8 +73,6 @@ class CategoryListView(ListView):
 class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/detail.html'
-    context_object_name = 'post'
-    pk_url_kwarg = 'post_id'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -88,7 +87,17 @@ class PostDetailView(DetailView):
             self.model.objects.select_related('location', 'author', 'category')
             .filter(pub_date__lte=timezone.now(),
                     is_published=True,
-                    category__is_published=True), pk=self.kwargs['post_id'])
+                    category__is_published=True), 
+                    pk=self.kwargs['post_id']
+        )
+    
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.object.is_published and self.object.author != request.user:
+            raise PermissionDenied(
+                "У вас нет разрешения на доступ к этому сообщению."
+            )
+        return super().dispatch(request, *args, **kwargs)
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
