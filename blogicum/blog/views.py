@@ -11,12 +11,12 @@ from django.views.generic import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.contrib.auth import get_user_model
-from django.core.exceptions import PermissionDenied
 
 # Импорты моделей и форм
 from .models import Post, Category, Comment
+from django.contrib.auth.models import AnonymousUser
 from .forms import CommentForm, UserForm, PostForm
 
 User = get_user_model()
@@ -82,22 +82,19 @@ class PostDetailView(DetailView):
         context['comments'] = comments
         return context
 
-    def get_object(self, queryset=None):
-        return get_object_or_404(
-            self.model.objects.select_related('location', 'author', 'category')
-            .filter(pub_date__lte=timezone.now(),
-                    is_published=True,
-                    category__is_published=True), pk=self.kwargs['post_id']
-        )
+    def get_object(self):
+        user = self.request.user
 
-    def dispatch(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if not self.object.is_published and self.object.author != request.user:
-            raise PermissionDenied(
-                "У вас нет разрешения на доступ к этому сообщению."
+        if isinstance(user, AnonymousUser):
+            queryset = Post.objects.filter(is_published=True)
+        else:
+            queryset = Post.objects.filter(
+                Q(is_published=True) | Q(author=user)
             )
-        return super().dispatch(request, *args, **kwargs)
-
+        return get_object_or_404(
+            queryset,
+            pk=self.kwargs.get('post_id')
+        )
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
