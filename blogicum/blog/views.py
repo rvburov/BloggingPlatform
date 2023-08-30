@@ -13,7 +13,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
 from django.db.models import Count
 from django.contrib.auth import get_user_model
-from django.core.exceptions import PermissionDenied
 
 # Импорты моделей и форм
 from .models import Post, Category, Comment
@@ -90,18 +89,13 @@ class PostDetailView(DetailView):
                 'location',
                 'author',
                 'category',
+            ).filter(
+                pub_date__lte=timezone.now(),
+                is_published=True,
+                category__is_published=True,
             ).annotate(comment_count=Count("comment")).order_by('-pub_date')
         )
         return queryset
-
-    def dispatch(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if not self.object.is_published and self.object.author != request.user:
-            raise PermissionDenied(
-                "У вас нет разрешения на доступ к этому сообщению."
-            )
-
-        return super().dispatch(request, *args, **kwargs)
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
