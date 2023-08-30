@@ -96,6 +96,7 @@ class PostDetailView(DetailView):
             pk=self.kwargs.get('post_id')
         )
 
+
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     template_name = 'blog/create.html'
