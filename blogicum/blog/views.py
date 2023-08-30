@@ -87,10 +87,9 @@ class PostDetailView(DetailView):
             self.model.objects.select_related('location', 'author', 'category')
             .filter(pub_date__lte=timezone.now(),
                     is_published=True,
-                    category__is_published=True), 
-                    pk=self.kwargs['post_id']
+                    category__is_published=True), pk=self.kwargs['post_id']
         )
-    
+
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
         if not self.object.is_published and self.object.author != request.user:
