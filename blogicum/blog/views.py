@@ -13,7 +13,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import send_mail
 from django.db.models import Count
 from django.contrib.auth import get_user_model
-from django.core.exceptions import PermissionDenied
 
 # Импорты моделей и форм
 from .models import Post, Category, Comment
