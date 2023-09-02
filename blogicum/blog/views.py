@@ -1,7 +1,7 @@
-# Импорты модулей и библиотек
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
+from django.contrib.auth.models import AnonymousUser
 from django.views.generic import (
     ListView,
     DetailView,
@@ -14,9 +14,7 @@ from django.core.mail import send_mail
 from django.db.models import Count, Q
 from django.contrib.auth import get_user_model
 
-# Импорты моделей и форм
 from .models import Post, Category, Comment
-from django.contrib.auth.models import AnonymousUser
 from .forms import CommentForm, UserForm, PostForm
 
 User = get_user_model()
@@ -37,7 +35,7 @@ class IndexListView(ListView):
                 pub_date__lte=timezone.now(),
                 is_published=True,
                 category__is_published=True,
-            ).annotate(comment_count=Count("comment"))
+            ).annotate(comment_count=Count("comments"))
             .order_by('-pub_date')
         )
         return queryset
@@ -53,12 +51,11 @@ class CategoryListView(ListView):
         category = get_object_or_404(
             Category.objects.filter(is_published=True),
             slug=category_slug)
-        queryset = category.categorized_posts.filter(
+        return category.categorized_posts.filter(
             is_published=True,
             pub_date__lte=timezone.now(),
             category__slug=category_slug
-        ).annotate(comment_count=Count("comment")).order_by('-pub_date')
-        return queryset
+        ).annotate(comment_count=Count("comments")).order_by('-pub_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -77,7 +74,7 @@ class PostDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         form = CommentForm(self.request.POST or None)
-        comments = self.object.comment.all()
+        comments = self.object.comments.all()
         context['form'] = form
         context['comments'] = comments
         return context
@@ -158,7 +155,7 @@ class ProfileListView(ListView):
         return (
             self.model.objects.select_related('author')
             .filter(author__username=self.kwargs['username'])
-            .annotate(comment_count=Count("comment"))
+            .annotate(comment_count=Count("comments"))
             .order_by("-pub_date"))
 
     def get_context_data(self, **kwargs):
