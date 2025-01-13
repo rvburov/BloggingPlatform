@@ -112,3 +112,6 @@ blogicum/
 - Python 3.11
 - Django 3.2+
 - SQLite (или другая поддерживаемая база данных)
+
+![Blogicum Screenshot](static_dev/img/Blogicum Screenshot.png)
+![Blogicum Screenshot](static_dev/img/Blogicum Screenshot-2.png)
